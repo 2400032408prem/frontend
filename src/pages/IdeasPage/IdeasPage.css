@@ -1,0 +1,53 @@
+.ideas-page {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.page-header p {
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.results-info {
+  margin: 2rem 0;
+  color: #666;
+}
+
+.improvements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.no-results {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #666;
+}
+
+.no-results h3 {
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .ideas-page {
+    padding: 1rem;
+  }
+  
+  .improvements-grid {
+    grid-template-columns: 1fr;
+  }
+}
