@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { generateRecommendations, calculateValorScore } from '../../utils/valorCalculator';
 import { improvementData } from '../../data/improvementData';
-import { saveUserReport, getUserReports } from '../../utils/storage';
+import apiService from '../../services/api';
 import './ReportPage.css';
 
 const ReportPage = ({ user }) => {
@@ -23,9 +23,18 @@ const ReportPage = ({ user }) => {
 
   useEffect(() => {
     if (user) {
-      setSavedReports(getUserReports());
+      loadUserReports();
     }
   }, [user]);
+
+  const loadUserReports = async () => {
+    try {
+      const reports = await apiService.getReports();
+      setSavedReports(reports);
+    } catch (error) {
+      console.error('Error loading reports:', error);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -46,19 +55,34 @@ const ReportPage = ({ user }) => {
     setReportSaved(false);
   };
 
-  const saveReport = () => {
-    const reportData = {
-      propertyData,
-      recommendations,
-      valorScore,
-      title: `HomeValor Report - ${new Date().toLocaleDateString()}`
-    };
-    
-    saveUserReport(reportData);
-    setSavedReports(getUserReports());
-    setReportSaved(true);
-    
-    setTimeout(() => setReportSaved(false), 3000);
+  const saveReport = async () => {
+    try {
+      const reportData = {
+        propertyDetails: {
+          propertyType: propertyData.type,
+          area: parseInt(propertyData.propertySize) || 0,
+          bedrooms: parseInt(propertyData.bedrooms) || 0,
+          age: new Date().getFullYear() - parseInt(propertyData.yearBuilt),
+          currentValue: 0
+        },
+        selectedImprovements: recommendations.map((rec, index) => ({
+          estimatedCost: rec.cost === 'Low' ? 30000 : rec.cost === 'Medium' ? 100000 : 250000,
+          priority: index + 1
+        })),
+        totalEstimatedCost: calculateTotalInvestment(),
+        projectedValueIncrease: calculateTotalValueIncrease(),
+        reportStatus: 'completed'
+      };
+      
+      await apiService.createReport(reportData);
+      await loadUserReports();
+      setReportSaved(true);
+      
+      setTimeout(() => setReportSaved(false), 3000);
+    } catch (error) {
+      console.error('Error saving report:', error);
+      alert('Failed to save report. Please try again.');
+    }
   };
 
   const calculateTotalInvestment = () => {
@@ -316,10 +340,10 @@ const ReportPage = ({ user }) => {
               <h3>Your Saved Reports</h3>
               <div className="reports-list">
                 {savedReports.slice(0, 3).map(report => (
-                  <div key={report.id} className="saved-report-item">
-                    <h4>{report.title}</h4>
-                    <p>Score: {report.valorScore}/100</p>
-                    <p>{new Date(report.timestamp).toLocaleDateString()}</p>
+                  <div key={report._id} className="saved-report-item">
+                    <h4>Report - {new Date(report.createdAt).toLocaleDateString()}</h4>
+                    <p>Investment: ₹{report.totalEstimatedCost?.toLocaleString()}</p>
+                    <p>Value Increase: +{report.projectedValueIncrease}%</p>
                   </div>
                 ))}
               </div>

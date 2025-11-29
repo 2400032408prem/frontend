@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { improvementData, roomTypes, costRanges, effortLevels } from '../../data/improvementData';
+import apiService from '../../services/api';
+import { roomTypes, costRanges, effortLevels } from '../../data/improvementData';
 
 const IdeasPage = () => {
-  const [improvements, setImprovements] = useState(improvementData);
+  const [improvements, setImprovements] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     room: 'All',
     cost: 'All',
@@ -11,30 +13,33 @@ const IdeasPage = () => {
   });
 
   useEffect(() => {
-    filterImprovements();
+    loadImprovements();
   }, [filters]);
 
-  const filterImprovements = () => {
-    let filtered = improvementData;
-
-    if (filters.room !== 'All') {
-      filtered = filtered.filter(imp => imp.room === filters.room);
+  const loadImprovements = async () => {
+    try {
+      setLoading(true);
+      const apiFilters = {};
+      if (filters.room !== 'All') apiFilters.room = filters.room;
+      if (filters.cost !== 'All') apiFilters.cost = filters.cost;
+      if (filters.effort !== 'All') apiFilters.effort = filters.effort;
+      
+      let data = await apiService.getImprovements(apiFilters);
+      
+      if (filters.searchQuery) {
+        const query = filters.searchQuery.toLowerCase();
+        data = data.filter(imp => 
+          imp.title.toLowerCase().includes(query) ||
+          imp.description.toLowerCase().includes(query)
+        );
+      }
+      
+      setImprovements(data);
+    } catch (error) {
+      console.error('Error loading improvements:', error);
+    } finally {
+      setLoading(false);
     }
-    if (filters.cost !== 'All') {
-      filtered = filtered.filter(imp => imp.cost === filters.cost);
-    }
-    if (filters.effort !== 'All') {
-      filtered = filtered.filter(imp => imp.effort === filters.effort);
-    }
-    if (filters.searchQuery) {
-      const query = filters.searchQuery.toLowerCase();
-      filtered = filtered.filter(imp => 
-        imp.title.toLowerCase().includes(query) ||
-        imp.description.toLowerCase().includes(query)
-      );
-    }
-
-    setImprovements(filtered);
   };
 
   const handleFilterChange = (key, value) => {
@@ -191,7 +196,7 @@ const IdeasPage = () => {
       </div>
 
       <div style={{margin: '2rem 0', color: '#666'}}>
-        Found {improvements.length} improvement ideas
+        {loading ? 'Loading...' : `Found ${improvements.length} improvement ideas`}
       </div>
 
       <div style={styles.grid}>

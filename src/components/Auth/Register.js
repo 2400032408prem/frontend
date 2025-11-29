@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import apiService from '../../services/api';
 import './Auth.css';
 
 const Register = ({ onRegister, onSwitchToLogin, onClose }) => {
@@ -11,28 +12,26 @@ const Register = ({ onRegister, onSwitchToLogin, onClose }) => {
     userType: 'user'
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match!");
+      setError("Passwords don't match!");
       return;
     }
     
     setLoading(true);
+    setError('');
     
-    // Simulate API call
-    setTimeout(() => {
-      const userData = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        type: formData.userType,
-        isAdmin: formData.userType === 'admin'
-      };
+    try {
+      const userData = await apiService.register(formData.name, formData.email, formData.password);
       onRegister(userData);
+    } catch (err) {
+      setError(err.message);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -47,6 +46,7 @@ const Register = ({ onRegister, onSwitchToLogin, onClose }) => {
         </div>
         
         <form onSubmit={handleSubmit} className="auth-form">
+          {error && <div className="error-message">{error}</div>}
           <div className="form-group">
             <label>User Type</label>
             <div className="user-type-selector">

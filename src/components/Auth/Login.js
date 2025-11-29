@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import apiService from '../../services/api';
 import './Auth.css';
 
 const Login = ({ onLogin, onSwitchToRegister, onClose }) => {
@@ -8,22 +9,21 @@ const Login = ({ onLogin, onSwitchToRegister, onClose }) => {
     userType: 'user' 
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     
-    // Simulate API call
-    setTimeout(() => {
-      const userData = {
-        email: credentials.email,
-        name: credentials.email.split('@')[0],
-        type: credentials.userType,
-        isAdmin: credentials.userType === 'admin'
-      };
+    try {
+      const userData = await apiService.login(credentials.email, credentials.password);
       onLogin(userData);
+    } catch (err) {
+      setError(err.message);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -38,6 +38,7 @@ const Login = ({ onLogin, onSwitchToRegister, onClose }) => {
         </div>
         
         <form onSubmit={handleSubmit} className="auth-form">
+          {error && <div className="error-message">{error}</div>}
           <div className="form-group">
             <label>User Type</label>
             <div className="user-type-selector">
